@@ -378,6 +378,8 @@ If an invalid tool name is specified, the server will fail to start with an erro
 
 ## Security
 
+The temporary OAuth callback listener binds explicitly to `127.0.0.1`.
+
 - OAuth tokens are stored securely in your system's config directory
 - Credentials never leave your local machine
 - All calendar operations require explicit user consent
