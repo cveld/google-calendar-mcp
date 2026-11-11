@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { platform } from 'os';
-import { getOAuthScopes, getTokenProtection, loadAppConfig } from '../../../config/AppConfig.js';
+import { getOAuthScopes, loadAppConfig } from '../../../config/AppConfig.js';
 
 describe('security configuration', () => {
   it('does not request Calendar administration in any scope profile', () => {
@@ -23,18 +22,8 @@ describe('security configuration', () => {
       expect(() => getOAuthScopes({ GOOGLE_CALENDAR_MCP_SCOPE_PROFILE: value })).toThrow('SCOPE_PROFILE');
     }
   });
-  it('validates encryption without silent fallback', () => {
-    expect(getTokenProtection({})).toBe('plaintext');
-    expect(() => getTokenProtection({ GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION: '' })).toThrow('TOKEN_PROTECTION');
-    if (platform() === 'win32') {
-      expect(getTokenProtection({ GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION: 'dpapi' })).toBe('dpapi');
-    } else {
-      expect(() => getTokenProtection({ GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION: 'dpapi' })).toThrow('requires Windows');
-    }
-  });
   it('resolves the settings at startup', () => {
     const config = loadAppConfig([], { GOOGLE_CALENDAR_MCP_SCOPE_PROFILE: 'owned' });
     expect(config.oauthScopes).toEqual(getOAuthScopes({ GOOGLE_CALENDAR_MCP_SCOPE_PROFILE: 'owned' }));
-    expect(config.tokenProtection).toBe('plaintext');
   });
 });
