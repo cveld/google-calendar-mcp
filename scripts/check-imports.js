@@ -7,6 +7,7 @@
 import { readFileSync, readdirSync, statSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { isBuiltin } from 'node:module';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const rootDir = join(__dirname, '..');
@@ -17,15 +18,6 @@ const declaredDeps = new Set([
   ...Object.keys(pkg.dependencies || {}),
   ...Object.keys(pkg.devDependencies || {}),
   ...Object.keys(pkg.peerDependencies || {})
-]);
-
-// Built-in Node.js modules to ignore
-const builtins = new Set([
-  'fs', 'path', 'url', 'http', 'https', 'crypto', 'os', 'stream',
-  'util', 'events', 'buffer', 'querystring', 'net', 'child_process',
-  'fs/promises', 'node:fs', 'node:path', 'node:url', 'node:crypto',
-  'node:child_process', 'node:http', 'node:https', 'node:os', 'node:stream',
-  'node:util', 'node:events', 'node:buffer', 'node:querystring', 'node:net'
 ]);
 
 // Find all .ts files in src/
@@ -84,7 +76,7 @@ for (const file of files) {
 // Check for undeclared dependencies
 const undeclared = [];
 for (const [pkg, files] of allImports) {
-  if (!declaredDeps.has(pkg) && !builtins.has(pkg)) {
+  if (!declaredDeps.has(pkg) && !isBuiltin(pkg)) {
     undeclared.push({ pkg, files });
   }
 }
