@@ -11,9 +11,14 @@ describe('TokenManager - Multi-Account Support', () => {
   let tokenManager: TokenManager;
 
   beforeEach(() => {
+    vi.restoreAllMocks();
     vi.clearAllMocks();
     oauth2Client = new OAuth2Client('client-id', 'client-secret', 'redirect-uri');
     tokenManager = new TokenManager(oauth2Client);
+    // Unit tests must not query live Google APIs with synthetic credentials.
+    vi.spyOn(tokenManager as any, 'fetchCalendarsForClient').mockResolvedValue([]);
+    vi.spyOn(OAuth2Client.prototype, 'refreshAccessToken')
+      .mockRejectedValue(new Error('mocked transient refresh failure') as never);
   });
 
   describe('constructor accountMode', () => {

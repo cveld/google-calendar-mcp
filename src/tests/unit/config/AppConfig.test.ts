@@ -53,7 +53,7 @@ describe('loadAppConfig', () => {
     expect(config.debug).toBe(true);
     expect(config.enabledTools).toEqual(['list-events', 'get-event']);
     expect(config.credentialsPath).toBe(path.resolve('creds.json'));
-    expect(config.tokenPath).toBe('/tmp/tokens.json');
+    expect(config.tokenPath).toBe(path.resolve('/tmp/tokens.json'));
     expect(config.accountMode).toBe('work');
     expect(config.isTest).toBe(true);
     expect(config.sources.transport).toBe('env');
