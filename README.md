@@ -383,8 +383,10 @@ If an invalid tool name is specified, the server will fail to start with an erro
 ## Security
 
 See [OAuth scope profiles](docs/oauth-scope-profiles.md) for reduced OAuth
-permissions. [Local security hardening](docs/local-security-hardening.md)
-covers Windows token encryption and the additional local protections.
+permissions and [Windows token protection](docs/windows-token-protection.md)
+for optional DPAPI encryption and restrictive token-directory ACLs.
+[Local security hardening](docs/local-security-hardening.md) covers the
+combined personal setup and the additional local protections.
 The temporary OAuth callback listener binds explicitly to `127.0.0.1`.
 
 - OAuth tokens are stored securely in your system's config directory

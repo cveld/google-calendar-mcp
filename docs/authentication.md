@@ -109,8 +109,10 @@ Place the credentials file in the project root as `gcp-oauth.keys.json`.
 ## Token Storage
 
 See [OAuth scope profiles](oauth-scope-profiles.md) and
-[Local security hardening](local-security-hardening.md) for Windows DPAPI encryption. Apply the same profile and protection
-settings to the authentication process and the running MCP server.
+[Windows token protection](windows-token-protection.md) for the separate features.
+Apply the same profile and protection settings to the authentication process
+and the running MCP server. See [Local security hardening](local-security-hardening.md)
+for the combined personal setup and additional local protections.
 
 OAuth tokens are automatically stored in a secure location:
 

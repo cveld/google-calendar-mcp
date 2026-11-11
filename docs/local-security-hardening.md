@@ -1,5 +1,9 @@
 # Local security hardening
 
+The independently maintained feature guides are [OAuth scope profiles](oauth-scope-profiles.md)
+and [Windows token protection](windows-token-protection.md). This local guide
+also covers the combined personal preset, callback binding, and dependency hardening.
+
 ## OAuth scopes
 
 `GOOGLE_CALENDAR_MCP_SCOPE_PROFILE` chooses the event scope used by both OAuth
