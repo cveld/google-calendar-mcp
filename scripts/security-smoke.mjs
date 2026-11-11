@@ -13,6 +13,7 @@ const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'calendar-mcp-smoke-'));
 const credentials = path.join(dir, 'synthetic-client.json');
 const client = new Client({ name: 'offline-security-smoke', version: '1.0.0' });
 let timer;
+let diagnostics = '';
 try {
   await fs.writeFile(credentials, JSON.stringify({
     installed: {
@@ -34,16 +35,23 @@ try {
       GOOGLE_OAUTH_CREDENTIALS: credentials,
       GOOGLE_SERVICE_ACCOUNT_KEY: '',
       GOOGLE_APPLICATION_CREDENTIALS: '',
+      GOOGLE_SERVICE_ACCOUNT_SUBJECT: '',
+      GOOGLE_ACCOUNT_MODE: 'synthetic-test',
+      GOOGLE_CALENDAR_API_BASE_URL: 'https://www.googleapis.com',
+      GOOGLE_OAUTH_REDIRECT_BASE: '',
       GOOGLE_CALENDAR_MCP_TOKEN_PATH: path.join(dir, 'tokens.json'),
       GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION: process.platform === 'win32' ? 'dpapi' : 'plaintext',
       GOOGLE_CALENDAR_MCP_SCOPE_PROFILE: 'owned',
       ENABLED_TOOLS: 'list-calendars,list-events,get-event,create-event,update-event,get-current-time'
     }
   });
-  transport.stderr?.on('data', () => {});
+  transport.stderr?.on('data', chunk => {
+    diagnostics = (diagnostics + chunk.toString()).slice(-4096);
+  });
+  // Permit cold imports of the Google SDK on Windows, while retaining a bound.
   await Promise.race([
-    client.connect(transport),
-    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('MCP initialization timed out')), 15000); })
+    client.connect(transport, { timeout: 120000 }),
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('MCP initialization timed out')), 125000); })
   ]);
   clearTimeout(timer);
   const names = (await client.listTools()).tools.map(tool => tool.name);
@@ -54,6 +62,13 @@ try {
   assert(!names.includes('respond-to-event'));
   assert.equal(await fs.access(path.join(dir, 'tokens.json')).then(() => true, () => false), false);
   console.log('Built STDIO MCP initialized; tool allowlist verified; no tokens created.');
+} catch (error) {
+  for (const value of [dir, root, os.homedir()]) {
+    diagnostics = diagnostics.split(value).join('<local-path>');
+    diagnostics = diagnostics.split(value.replaceAll('\\', '/')).join('<local-path>');
+  }
+  console.error('Synthetic smoke server diagnostics:', diagnostics);
+  throw error;
 } finally {
   clearTimeout(timer);
   await client.close();
