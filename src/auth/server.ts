@@ -51,7 +51,7 @@ export class AuthServer {
   private getRedirectUri(port: number): string {
     return this.redirectBase
       ? `${this.redirectBase}/oauth2callback`
-      : `http://localhost:${port}/oauth2callback`;
+      : `http://127.0.0.1:${port}/oauth2callback`;
   }
 
   /**
@@ -132,7 +132,7 @@ export class AuthServer {
 
   private createServer(): http.Server {
     const server = http.createServer(async (req, res) => {
-      const url = new URL(req.url || '/', `http://${req.headers.host}`);
+      const url = new URL(req.url || '/', 'http://127.0.0.1');
       
       if (url.pathname === '/styles.css') {
         // Serve shared CSS
@@ -292,7 +292,7 @@ export class AuthServer {
     
     // Always show the URL in console for easy access
     process.stderr.write(`\n🔗 Authentication URL: ${authorizeUrl}\n\n`);
-    process.stderr.write(`Or visit: ${this.redirectBase ?? `http://localhost:${port}`}\n\n`);
+    process.stderr.write(`Or visit: ${this.redirectBase ?? `http://127.0.0.1:${port}`}\n\n`);
     
     if (openBrowser) {
       try {
@@ -316,7 +316,7 @@ export class AuthServer {
       try {
         await new Promise<void>((resolve, reject) => {
           const testServer = this.createServer();
-          testServer.listen(port, () => {
+          testServer.listen(port, '127.0.0.1', () => {
             this.server = testServer; // Assign to class property *only* if successful
             resolve();
           });
@@ -467,4 +467,4 @@ export class AuthServer {
       callbackUrl: this.getRedirectUri(port)
     };
   }
-} 
+}

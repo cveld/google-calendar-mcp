@@ -68,7 +68,7 @@ describe('AuthServer', () => {
 
     // Setup mock http server
     mockHttpServer = {
-      listen: vi.fn((port: number, callback: () => void) => {
+      listen: vi.fn((port: number, host: string, callback: () => void) => {
         callback();
       }),
       close: vi.fn((callback?: (err?: Error) => void) => {
@@ -99,6 +99,8 @@ describe('AuthServer', () => {
       expect(result.authUrl).toContain('accounts.google.com');
       expect(result.callbackUrl).toContain('oauth2callback');
       expect(result.callbackUrl).toContain('3500');
+      expect(result.callbackUrl).toBe('http://127.0.0.1:3500/oauth2callback');
+      expect(mockHttpServer.listen).toHaveBeenCalledWith(3500, '127.0.0.1', expect.any(Function));
     });
 
     describe('with GOOGLE_OAUTH_REDIRECT_BASE set', () => {
@@ -131,7 +133,7 @@ describe('AuthServer', () => {
         expect(result.success).toBe(false);
         expect(result.error).toMatch(/Port 3500 is in use/);
         expect(mockHttpServer.listen).toHaveBeenCalledTimes(1);
-        expect(mockHttpServer.listen).toHaveBeenCalledWith(3500, expect.any(Function));
+        expect(mockHttpServer.listen).toHaveBeenCalledWith(3500, '127.0.0.1', expect.any(Function));
       });
 
       it('reports a malformed redirect base without starting a server', async () => {
