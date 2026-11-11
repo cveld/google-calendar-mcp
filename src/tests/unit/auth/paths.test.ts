@@ -20,7 +20,7 @@ describe('getSecureTokenPath', () => {
   describe('Priority 1: GOOGLE_CALENDAR_MCP_TOKEN_PATH', () => {
     it('should use GOOGLE_CALENDAR_MCP_TOKEN_PATH when set (absolute path)', () => {
       process.env.GOOGLE_CALENDAR_MCP_TOKEN_PATH = '/custom/path/tokens.json';
-      expect(getSecureTokenPath()).toBe('/custom/path/tokens.json');
+      expect(getSecureTokenPath()).toBe(path.resolve('/custom/path/tokens.json'));
     });
 
     it('should resolve relative GOOGLE_CALENDAR_MCP_TOKEN_PATH to absolute', () => {
@@ -33,14 +33,14 @@ describe('getSecureTokenPath', () => {
     it('should prioritize GOOGLE_CALENDAR_MCP_TOKEN_PATH over XDG_CONFIG_HOME', () => {
       process.env.GOOGLE_CALENDAR_MCP_TOKEN_PATH = '/custom/tokens.json';
       process.env.XDG_CONFIG_HOME = '/xdg/config';
-      expect(getSecureTokenPath()).toBe('/custom/tokens.json');
+      expect(getSecureTokenPath()).toBe(path.resolve('/custom/tokens.json'));
     });
   });
 
   describe('Priority 2: XDG_CONFIG_HOME', () => {
     it('should use XDG_CONFIG_HOME when set and no custom token path', () => {
       process.env.XDG_CONFIG_HOME = '/custom/xdg/config';
-      expect(getSecureTokenPath()).toBe('/custom/xdg/config/google-calendar-mcp/tokens.json');
+      expect(getSecureTokenPath()).toBe(path.join('/custom/xdg/config', 'google-calendar-mcp', 'tokens.json'));
     });
   });
 
