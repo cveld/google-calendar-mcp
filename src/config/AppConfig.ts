@@ -18,6 +18,7 @@
  * scripts/account-manager.js imports that file directly under plain Node.
  */
 import * as path from 'path';
+import { platform } from 'os';
 import { getAccountMode, getSecureTokenPath } from '../auth/paths.js';
 
 export type TransportType = 'stdio' | 'http';
@@ -48,6 +49,7 @@ export interface AppConfig extends ServerConfig {
   /** Public base URL for the OAuth callback (GOOGLE_OAUTH_REDIRECT_BASE), or undefined for the loopback redirect */
   oauthRedirectBase?: string;
   oauthScopes: string[];
+  tokenProtection: TokenProtection;
   /** NODE_ENV=test: skips startup auth, uses the 'test' token namespace, quiets token logging */
   isTest: boolean;
   sources: Record<string, ConfigSource>;
@@ -66,6 +68,7 @@ export class ConfigError extends Error {
   }
 }
 
+export type TokenProtection = 'plaintext' | 'dpapi';
 export type ScopeProfile = 'standard' | 'owned' | 'readonly';
 
 const CALENDAR_SCOPE_PREFIX = 'https://www.googleapis.com/auth/calendar.';
@@ -87,6 +90,23 @@ export function getOAuthScopes(env: NodeJS.ProcessEnv = process.env): string[] {
   return [`${CALENDAR_SCOPE_PREFIX}${eventScope}`, ...DEFAULT_OAUTH_SCOPES.slice(1)];
 }
 
+/** DPAPI is opt-in so existing non-Windows installations retain their file format. */
+export function getTokenProtection(env: NodeJS.ProcessEnv = process.env): TokenProtection {
+  const mode = env.GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION ?? 'plaintext';
+  if (mode !== 'plaintext' && mode !== 'dpapi') {
+    throw new ConfigError('GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION must be "plaintext" or "dpapi"');
+  }
+  if (mode === 'dpapi' && platform() !== 'win32') {
+    throw new ConfigError('GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION=dpapi requires Windows');
+  }
+  return mode;
+}
+
+/** Use the OS-supplied executable, not a PowerShell executable resolved through PATH. */
+export function getWindowsPowerShellPath(env: NodeJS.ProcessEnv = process.env): string {
+  return path.join(env.SystemRoot || 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+}
+
 export interface EnvVarDoc {
   name: string;
   cliFlag?: string;
@@ -98,6 +118,7 @@ export const CONFIG_ENV_VARS: readonly EnvVarDoc[] = [
   { name: 'GOOGLE_OAUTH_CREDENTIALS', defaultValue: '`gcp-oauth.keys.json` in the package root', description: 'Path to the OAuth credentials file' },
   { name: 'GOOGLE_OAUTH_REDIRECT_BASE', defaultValue: 'unset (loopback `http://localhost:<port>`)', description: 'Public base URL for the OAuth callback when authenticating through a tunnel or reverse proxy (see docs/authentication.md)' },
   { name: 'GOOGLE_CALENDAR_MCP_SCOPE_PROFILE', defaultValue: '`standard`', description: 'OAuth event access: standard, owned, or readonly; none grants calendar or sharing administration' },
+  { name: 'GOOGLE_CALENDAR_MCP_TOKEN_PROTECTION', defaultValue: '`plaintext`', description: 'Token file format: plaintext (compatibility) or dpapi (Windows CurrentUser encryption, no plaintext fallback)' },
   { name: 'GOOGLE_SERVICE_ACCOUNT_KEY', defaultValue: 'unset', description: 'Path to an explicit service account key file' },
   { name: 'GOOGLE_APPLICATION_CREDENTIALS', defaultValue: 'unset', description: 'Ambient Google credentials file, used when this server has no OAuth credentials file' },
   { name: 'GOOGLE_SERVICE_ACCOUNT_SUBJECT', defaultValue: 'unset', description: 'Workspace user to impersonate with domain-wide delegation' },
@@ -301,6 +322,7 @@ export function loadAppConfig(args: string[], env: Env = process.env): AppConfig
   sources.apiBaseUrl = apiBaseUrl === DEFAULT_API_ORIGIN ? 'default' : 'env';
   const oauthRedirectBase = getOAuthRedirectBase(env);
   const oauthScopes = getOAuthScopes(env);
+  const tokenProtection = getTokenProtection(env);
   sources.oauthRedirectBase = oauthRedirectBase ? 'env' : 'default';
   sources.accountMode = env.GOOGLE_ACCOUNT_MODE !== undefined ? 'env' : 'default';
 
@@ -322,6 +344,7 @@ export function loadAppConfig(args: string[], env: Env = process.env): AppConfig
     apiBaseUrl,
     oauthRedirectBase,
     oauthScopes: Object.freeze(oauthScopes) as string[],
+    tokenProtection,
     isTest: isTestEnvironment(env),
     sources: Object.freeze(sources)
   });
@@ -345,6 +368,7 @@ export function formatResolvedConfig(config: AppConfig): string {
   lines.push(line('debug', config.debug, 'debug'));
   lines.push(line('credentials', config.credentialsPath ?? 'package default (gcp-oauth.keys.json)', 'credentialsPath'));
   lines.push(line('tokenPath', config.tokenPath, 'tokenPath'));
+  lines.push(`  tokenProtection: ${config.tokenProtection}`);
   lines.push(`  oauthScopes: ${config.oauthScopes.join(',')}`);
   lines.push(line('accountMode', config.accountMode, 'accountMode'));
   if (config.isTest) {
