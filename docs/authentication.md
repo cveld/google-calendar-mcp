@@ -101,6 +101,9 @@ Place the credentials file in the project root as `gcp-oauth.keys.json`.
 
 ## Token Storage
 
+See [Local security hardening](local-security-hardening.md) for OAuth scope
+profiles. Apply the same profile to authentication and the running MCP server.
+
 OAuth tokens are automatically stored in a secure location:
 
 - **macOS/Linux**: `~/.config/google-calendar-mcp/tokens.json`
