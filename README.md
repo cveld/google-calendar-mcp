@@ -50,7 +50,9 @@ A Model Context Protocol (MCP) server that provides Google Calendar integration 
    - Choose "User data" for the type of data that the app will be accessing
    - Add your app name and contact information
    - Add the following scopes (optional):
-     - `https://www.googleapis.com/auth/calendar.events` and `https://www.googleapis.com/auth/calendar`
+     - Event scope: `https://www.googleapis.com/auth/calendar.events` (standard), `calendar.events.owned` (owned), or `calendar.events.readonly` (readonly), using the same URL prefix
+     - Supporting scopes: `https://www.googleapis.com/auth/calendar.calendarlist.readonly`, `https://www.googleapis.com/auth/calendar.calendars.readonly`, and `https://www.googleapis.com/auth/calendar.events.freebusy`
+     - Match `GOOGLE_CALENDAR_MCP_SCOPE_PROFILE` in the auth and server processes; full `calendar` administration access is not required
    - Select "Desktop app" as the application type (Important!)
    - Save the auth key, you'll need to add its path to the JSON in the next step
    - Add your email address as a test user under the [Audience screen](https://console.cloud.google.com/auth/audience)
